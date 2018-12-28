@@ -8,19 +8,33 @@
     <body>
         <div style="border: 1px solid gray;padding: 15px;">
             <h5>1. 获取两个经纬度之间的距离：</h5>
-            <h6 style="color: brown">备注：txt文件格式：经度1,纬度|经度2,纬度2</h6>
+            <h6 style="color: brown">备注：txt文件格式: 经度1,纬度1|经度2,纬度2
+                例如：<br/>
+                121.506974,31.328589|121.506545,31.32221<br/>
+                121.532122,31.322723|121.532036,31.315024
+            </h6>
             <input type="file" id="file1" onchange="getDistances(this.id)"/>
         </div>
 
         <div style="border: 1px solid gray; margin-top: 30px;padding: 15px;">
             <h5>2. 根据经纬度获取地址</h5>
-            <h6 style="color: brown">备注：txt文件格式：经度,纬度</h6>
+            <h6 style="color: brown">备注：txt文件格式：经度,纬度<br/>
+                例如：<br/>
+                121.491649,31.332118<br/>
+                121.484439,31.319873<br/>
+                121.485297,31.305721<br/>
+            </h6>
             <input type="file" id="file2" onchange="getAddresses(this.id)"/>
         </div>
 
         <div style="border: 1px solid gray; margin-top: 30px;padding: 15px;">
             <h5>3. 根据地址获取经纬度</h5>
-            <h6 style="color: brown">备注：txt文件格式：地址</h6>
+            <h6 style="color: brown">备注：txt文件格式：地址<br/>
+                例如: <br/>
+                上海市宝山区淞南镇长江南路(地铁站)<br/>
+                上海市宝山区高境镇逸仙路1400号<br/>
+                上海市虹口区江湾镇街道逸仙高架路
+            </h6>
             <input type="file" id="file3" onchange="getLongitudeALatitude(this.id)"/>
         </div>
     </body>
