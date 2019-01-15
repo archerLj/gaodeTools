@@ -5,6 +5,28 @@
         <script src="https://cdn.staticfile.org/jquery/3.3.1/jquery.min.js"></script>
     </head>
     
+    <!--loading图标样式-->
+    <style>
+        svg {
+            position: relative;
+            width: 125px;
+            height: 125px;
+            margin: 25px;
+            z-index: 2000;
+            display: inline-block;
+        }
+    .mask {
+        position: absolute;
+        top: 0px;
+        filter: alpha(opacity=60);
+        background-color: #777;
+        z-index: 1002;
+        left: 0px;
+        opacity: 0.5;
+        -moz-opacity: 0.5;
+    }
+    </style>
+    
     <body>
         <div style="border: 1px solid gray;padding: 15px;">
             <h5>1. 获取两个经纬度之间的距离：</h5>
@@ -37,12 +59,30 @@
             </h6>
             <input type="file" id="file3" onchange="getLongitudeALatitude(this.id)"/>
         </div>
+        
+        <!--loading图标-->
+        <div id="mask" class="mask"></div>
+        <div id="loading" hidden="hidden">
+            <svg version="1.1" id="L9" xmlns="http://www.w3.org/2000/svg" x="0px"
+                y="0px"
+                viewBox="0 0 100 100" enable-background="new 0 0 0 0" xml:space="preserve">
+                <path fill="#1E90FF"
+                    d="M73,50c0-12.7-10.3-23-23-23S27,37.3,27,50 M30.9,50c0-10.5,8.5-19.1,19.1-19.1S69.1,39.5,69.1,50">
+                    <animateTransform attributeName="transform" attributeType="XML"
+                    type="rotate"
+                    dur="1s"
+                    from="0 50 50"
+                    to="360 50 50"
+                    repeatCount="indefinite"/>
+                </path>
+            </svg>
+        </div>
     </body>
 
 <script>
-
     // 批量转换地址为经纬度
     function getLongitudeALatitude(id){
+        loading()
         var a = $("#"+id);
         var selectedFile = $("#"+id)[0].files[0];
         var reader = new FileReader();//new一个FileReader实例
@@ -52,9 +92,9 @@
         }
         reader.readAsText(selectedFile);
     }
-
     // 批量转换经纬度
     function getAddresses(id){
+        loading()
         var a = $("#"+id);
         var selectedFile = $("#"+id)[0].files[0];
         var reader = new FileReader();//new一个FileReader实例
@@ -64,9 +104,9 @@
         }
         reader.readAsText(selectedFile);
     }
-
     // 批量获取两组经纬度之间的距离
     function getDistances(id){
+        loading()
         var a = $("#"+id);
         var selectedFile = $("#"+id)[0].files[0];
         var reader = new FileReader();//new一个FileReader实例
@@ -81,12 +121,11 @@
                 var rs = getDistance(firstArr[0], firstArr[1], secondArr[0], secondArr[1]);
                 results += rs + "\n";
             }
-
             funDownload(results, "result.txt");
+            cancelloading()
         }
         reader.readAsText(selectedFile);
     }
-
     // 获取两个经纬度之间的距离
     function getDistance(firstLon, firstLat, secondeLon, secondeLat) {
         var lnglat1 = new AMap.LngLat(firstLon, firstLat);
@@ -94,64 +133,62 @@
         var distance = lnglat1.distance(lnglat2);//计算lnglat1到lnglat2之间的实际距离(m)
         return distance;
     }
-
     // 获取某个经纬度对应的地址
     function getAddress(addresses, index, rs) {
-
         if (index == addresses.length) {
             funDownload(rs, "result.txt");
+            cancelloading()
             return
         }
-
         var item = addresses[index];
         if (item == "") {
             funDownload(rs, "result.txt");
+            cancelloading()
             return
         }
         var longALat = item.split(",");
-
         AMap.plugin('AMap.Geocoder', function() {
             var geocoder = new AMap.Geocoder()
-
             // var lnglat = [long, lati]
-
             geocoder.getAddress(longALat, function(status, result) {
                 if (status === 'complete' && result.info === 'OK') {
                     // result为对应的地理位置详细信息
                     rs += result.regeocode.formattedAddress + "\n";
                     getAddress(addresses, index + 1, rs);
+                } else {
+                                cancelloading()
+                    alert("解析【"+ longALat +"】失败，请修改后重新上传")
                 }
             })
         })
     }
-
     // 获取某个地址的经纬度
     function getLonALati(addresses, index, rs) {
-
         if (index == addresses.length) {
             funDownload(rs, "result.txt");
+            cancelloading()
             return;
         }
-
         var address = addresses[index];
         if (address == "") {
             funDownload(rs, "result.txt");
+            cancelloading()
             return;
         }
-
         AMap.plugin('AMap.Geocoder', function() {
             var geocoder = new AMap.Geocoder();
-
             geocoder.getLocation(address, function(status, result) {
                 if (status === 'complete' && result.info === 'OK') {
                     // result中对应详细地理坐标信息
                     rs += result.geocodes[0].location.lng + "," + result.geocodes[0].location.lat + "\n";
                     getLonALati(addresses, index + 1, rs);
+                } else {
+                                 cancelloading()
+                    alert("解析【"+ address +"】失败，请修改后重新上传")
                 }
             })
         })
     }
-
     // 下载文件
     var funDownload = function (content, filename) {
         var eleLink = document.createElement('a');
@@ -162,6 +199,33 @@
         document.body.appendChild(eleLink);
         eleLink.click();
         document.body.removeChild(eleLink);
+        alert("解析完成!")
     };
+
+
+function loading() {
+    showMask();
+    letDivCenter();
+}
+
+function cancelloading() {
+    $("#loading").hide();
+    $("#mask").hide();
+}
+
+function showMask() {
+    $("#mask").css("height", "100%");
+    $("#mask").css("width", "100%");
+    $("#mask").show();
+}
+
+//让指定的DIV始终显示在屏幕正中间
+function letDivCenter() {
+    var top = ($(window).height() - $("#loading").height()) / 2;
+    var left = ($(window).width() - $("#loading").width()) / 2;
+    var scrollTop = $(document).scrollTop();
+    var scrollLeft = $(document).scrollLeft();
+    $("#loading").css({position: 'absolute', 'top': top + scrollTop, left: left + scrollLeft}).show();
+}
 </script>
 </html>
