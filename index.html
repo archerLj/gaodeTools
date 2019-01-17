@@ -1,8 +1,10 @@
 <html>
     <head>
-        <meta charset="utf-8">
+        <meta charset="utf-8"/>
+            <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
         <script type="text/javascript" src="https://webapi.amap.com/maps?v=1.4.12&key=b13f6876e663ab305271e2573011a967"></script>
         <script src="https://cdn.staticfile.org/jquery/3.3.1/jquery.min.js"></script>
+        <script src="encoding.js"></script>
     </head>
     
     <!--loading图标样式-->
@@ -85,47 +87,74 @@
         loading()
         var a = $("#"+id);
         var selectedFile = $("#"+id)[0].files[0];
-        var reader = new FileReader();//new一个FileReader实例
-        reader.onload = function() {
-            var arr = this.result.split("\n");
-            getLonALati(arr, 0, "");
-        }
-        reader.readAsText(selectedFile);
+        
+        getFileEncode(selectedFile, function(encode) {
+            var reader = new FileReader();//new一个FileReader实例
+            reader.onload = function() {
+              var arr = this.result.split("\n");
+              getLonALati(arr, 0, "");
+            }
+            reader.readAsText(selectedFile, encode);
+        })
+        
     }
     // 批量转换经纬度
     function getAddresses(id){
         loading()
         var a = $("#"+id);
         var selectedFile = $("#"+id)[0].files[0];
-        var reader = new FileReader();//new一个FileReader实例
-        reader.onload = function() {
-            var arr = this.result.split("\n");
-            getAddress(arr,0,"");
-        }
-        reader.readAsText(selectedFile);
+        
+        getFileEncode(selectedFile, function(encode) {
+            var reader = new FileReader();//new一个FileReader实例
+            reader.onload = function() {
+                var arr = this.result.split("\n");
+                getAddress(arr,0,"");
+            }
+            reader.readAsText(selectedFile, encode);
+        })
     }
     // 批量获取两组经纬度之间的距离
     function getDistances(id){
         loading()
         var a = $("#"+id);
         var selectedFile = $("#"+id)[0].files[0];
-        var reader = new FileReader();//new一个FileReader实例
-        reader.onload = function() {
-            var arr = this.result.split("\n");
-            var results = "";
-            for (let i = 0; i < arr.length; i++) {
-                var item = arr[i];
-                var subItemArr = item.split("|"); // longitude, latitude
-                var firstArr = subItemArr[0].split(",");
-                var secondArr = subItemArr[1].split(",");
-                var rs = getDistance(firstArr[0], firstArr[1], secondArr[0], secondArr[1]);
-                results += rs + "\n";
+        
+        getFileEncode(selectedFile, function(encode) {
+            var reader = new FileReader();//new一个FileReader实例
+            reader.onload = function() {
+                var arr = this.result.split("\n");
+                var results = "";
+                for (let i = 0; i < arr.length; i++) {
+                      var item = arr[i];
+                      var subItemArr = item.split("|"); // longitude, latitude
+                      var firstArr = subItemArr[0].split(",");
+                      var secondArr = subItemArr[1].split(",");
+                      var rs = getDistance(firstArr[0], firstArr[1], secondArr[0], secondArr[1]);
+                      results += rs + "\r\n";
+                }
+                cancelloading()
+                funDownload(results, "result.txt");
             }
-            funDownload(results, "result.txt");
-            cancelloading()
-        }
-        reader.readAsText(selectedFile);
+            reader.readAsText(selectedFile, encode);
+        })
     }
+
+    // 获取文件编码
+    function getFileEncode(selectedFile, callback) {
+        var reader = new FileReader();//new一个FileReader实例
+        reader.onload = function(e) {
+            var codes = new Uint8Array(e.target.result);
+            var encoding = Encoding.detect(codes);
+            if (encoding == "UTF8") {
+                callback.call(this, "UTF8");
+            } else {
+                callback.call(this, "gb2312");
+            }
+            
+        }
+        reader.readAsArrayBuffer(selectedFile);
+    }
+    
     // 获取两个经纬度之间的距离
     function getDistance(firstLon, firstLat, secondeLon, secondeLat) {
         var lnglat1 = new AMap.LngLat(firstLon, firstLat);
@@ -136,14 +165,13 @@
     // 获取某个经纬度对应的地址
     function getAddress(addresses, index, rs) {
         if (index == addresses.length) {
-            funDownload(rs, "result.txt");
             cancelloading()
+            funDownload(rs, "result.txt");
             return
         }
         var item = addresses[index];
         if (item == "") {
-            funDownload(rs, "result.txt");
-            cancelloading()
+            getAddress(addresses, index + 1, rs);
             return
         }
         var longALat = item.split(",");
@@ -153,10 +181,10 @@
             geocoder.getAddress(longALat, function(status, result) {
                 if (status === 'complete' && result.info === 'OK') {
                     // result为对应的地理位置详细信息
-                    rs += result.regeocode.formattedAddress + "\n";
+                    rs += result.regeocode.formattedAddress + "\r\n";
                     getAddress(addresses, index + 1, rs);
                 } else {
-                                cancelloading()
+                    cancelloading()
                     alert("解析【"+ longALat +"】失败，请修改后重新上传")
                 }
             })
@@ -165,14 +193,13 @@
     // 获取某个地址的经纬度
     function getLonALati(addresses, index, rs) {
         if (index == addresses.length) {
-            funDownload(rs, "result.txt");
             cancelloading()
+            funDownload(rs, "result.txt");
             return;
         }
         var address = addresses[index];
         if (address == "") {
-            funDownload(rs, "result.txt");
-            cancelloading()
+            getLonALati(addresses, index + 1, rs);
             return;
         }
         AMap.plugin('AMap.Geocoder', function() {
@@ -180,10 +207,10 @@
             geocoder.getLocation(address, function(status, result) {
                 if (status === 'complete' && result.info === 'OK') {
                     // result中对应详细地理坐标信息
-                    rs += result.geocodes[0].location.lng + "," + result.geocodes[0].location.lat + "\n";
+                    rs += result.geocodes[0].location.lng + "," + result.geocodes[0].location.lat + "\r\n";
                     getLonALati(addresses, index + 1, rs);
                 } else {
-                                 cancelloading()
+                    cancelloading()
                     alert("解析【"+ address +"】失败，请修改后重新上传")
                 }
             })
